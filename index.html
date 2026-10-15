@@ -1,0 +1,496 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pocket Planet 🌱</title>
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: #182c37;
+    color: #fff7d6;
+    font-family: "Courier New", monospace;
+    text-align: center;
+    padding: 18px 10px;
+  }
+
+  h1 {
+    color: #b9f3b0;
+    margin: 4px 0;
+    font-size: clamp(24px, 5vw, 38px);
+    text-shadow: 3px 3px #31594c;
+  }
+
+  .subtitle { color: #d5e9ce; margin: 8px 0 16px; }
+
+  .game-frame {
+    width: min(960px, 100%);
+    margin: auto;
+    padding: 8px;
+    border: 4px solid #b9f3b0;
+    border-radius: 8px;
+    background: #31594c;
+    box-shadow: 0 8px 0 #101e27;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    image-rendering: pixelated;
+    background: #8fce8a;
+    border: 3px solid #182c37;
+  }
+
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 12px 4px 4px;
+    font-weight: bold;
+    font-size: 13px;
+  }
+
+  #message {
+    max-width: 960px;
+    margin: 16px auto;
+    min-height: 48px;
+    padding: 14px;
+    border: 2px solid #b9f3b0;
+    border-radius: 8px;
+    background: #263f47;
+    line-height: 1.6;
+  }
+
+  .controls {
+    display: grid;
+    grid-template-columns: repeat(3, 54px);
+    justify-content: center;
+    gap: 6px;
+    margin: 14px auto;
+  }
+
+  button {
+    border: 2px solid #b9f3b0;
+    border-radius: 8px;
+    background: #31594c;
+    color: white;
+    font: bold 18px "Courier New", monospace;
+    padding: 12px;
+    cursor: pointer;
+    touch-action: none;
+  }
+
+  button:active { background: #568b68; }
+  .empty { visibility: hidden; }
+  .action { font-size: 13px; margin: 4px; }
+
+  .instructions {
+    color: #d5e9ce;
+    line-height: 1.8;
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<h1>🌱 Pocket Planet</h1>
+<p class="subtitle">A tiny world, a thousand little adventures.</p>
+
+<div class="game-frame">
+  <canvas id="game" width="480" height="320"
+          aria-label="Pocket Planet pixel-art game"></canvas>
+  <div class="hud">
+    <span>🌰 Seeds: <span id="seeds">0</span></span>
+    <span>🌼 Flowers: <span id="flowers">0</span></span>
+    <span>🐰 Bunny: <span id="quest">Find me!</span></span>
+  </div>
+</div>
+
+<div id="message" role="status">
+  Welcome, explorer! Collect 3 magical seeds and find the bunny. 🌷
+</div>
+
+<div class="controls" aria-label="Touch movement controls">
+  <button class="empty" aria-hidden="true">·</button>
+  <button data-key="ArrowUp" aria-label="Move up">▲</button>
+  <button class="empty" aria-hidden="true">·</button>
+  <button data-key="ArrowLeft" aria-label="Move left">◀</button>
+  <button data-key="ArrowDown" aria-label="Move down">▼</button>
+  <button data-key="ArrowRight" aria-label="Move right">▶</button>
+</div>
+
+<button class="action" id="interact">✨ Interact (E / Space)</button>
+<button class="action" id="reset">↻ New Adventure</button>
+
+<p class="instructions">
+  Move: WASD or arrow keys<br>
+  Collect seeds by walking over them.<br>
+  Stand near the bunny or a garden patch and press E.<br>
+  Tip: You need 3 seeds to help the bunny!
+</p>
+
+<script>
+(() => {
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+
+  const TILE = 16;
+  const COLS = 30;
+  const ROWS = 20;
+
+  const seedStart = [
+    [8, 4], [14, 7], [5, 13], [25, 15], [17, 3]
+  ];
+
+  const treePositions = [
+    [2,2],[3,2],[8,2],[13,2],[18,2],[27,2],
+    [4,5],[10,5],[16,5],[28,6],[2,8],[7,9],
+    [13,10],[27,10],[3,15],[10,16],[19,16],
+    [28,17],[14,14],[24,4]
+  ];
+
+  const gardenPositions = [
+    [7,6],[11,12],[21,14],[25,7]
+  ];
+
+  let keys = {};
+  let seeds = [];
+  let gardens = [];
+  let flowers = 0;
+  let rescued = false;
+  let player = { x: 5 * TILE, y: 5 * TILE, speed: 2 };
+  let bunny = { x: 23 * TILE, y: 5 * TILE };
+  let lastTime = 0;
+  let messageTimer = 0;
+
+  const water = (x,y) =>
+    x >= 20 && x <= 24 && y >= 10 && y <= 13;
+
+  function resetGame() {
+    player = { x: 5*TILE, y: 5*TILE, speed: 2 };
+    bunny = { x: 23*TILE, y: 5*TILE };
+    seeds = seedStart.map(([x,y]) => ({x,y,taken:false}));
+    gardens = gardenPositions.map(([x,y]) => ({x,y,planted:false}));
+    flowers = 0;
+    rescued = false;
+    keys = {};
+    say("A fresh little world! Collect 3 seeds and find the bunny. 🌷");
+    updateHUD();
+  }
+
+  function say(text) {
+    document.getElementById("message").textContent = text;
+    messageTimer = 300;
+  }
+
+  function updateHUD() {
+    document.getElementById("seeds").textContent =
+      seeds.filter(s => s.taken).length;
+    document.getElementById("flowers").textContent = flowers;
+    document.getElementById("quest").textContent =
+      rescued ? "Complete! 💚" : "Find me!";
+  }
+
+  function blocked(x, y) {
+    const corners = [
+      [x+3,y+5], [x+12,y+5],
+      [x+3,y+13], [x+12,y+13]
+    ];
+
+    for (const [px,py] of corners) {
+      const tx = Math.floor(px/TILE);
+      const ty = Math.floor(py/TILE);
+
+      if (tx < 0 || ty < 0 || tx >= COLS || ty >= ROWS) return true;
+      if (water(tx,ty)) return true;
+      if (treePositions.some(([a,b]) => a===tx && b===ty)) return true;
+    }
+    return false;
+  }
+
+  function movePlayer(dx,dy) {
+    const nx = player.x + dx;
+    const ny = player.y + dy;
+    if (!blocked(nx, player.y)) player.x = nx;
+    if (!blocked(player.x, ny)) player.y = ny;
+  }
+
+  function collectSeeds() {
+    for (const s of seeds) {
+      if (s.taken) continue;
+      const sx = s.x*TILE + 8;
+      const sy = s.y*TILE + 8;
+      if (Math.hypot(player.x+8-sx, player.y+8-sy) < 13) {
+        s.taken = true;
+        say("You found a magical seed! ✨");
+        updateHUD();
+        beep(660, 0.08);
+      }
+    }
+  }
+
+  function interact() {
+    const distance = (obj) =>
+      Math.hypot(player.x-obj.x, player.y-obj.y);
+
+    if (distance(bunny) < 30) {
+      const count = seeds.filter(s => s.taken).length;
+
+      if (!rescued && count >= 3) {
+        rescued = true;
+        flowers += 1;
+        say("Bunny: 'You found my seeds! Let's make this island bloom!' 🌸 Quest complete!");
+        beep(880, 0.16);
+      } else if (!rescued) {
+        say(`Bunny: 'Could you find 3 magical seeds for me? You have ${count}!' 🐰`);
+      } else {
+        say("Bunny: 'Look how lovely our island is becoming!' 💚");
+      }
+      updateHUD();
+      return;
+    }
+
+    const patch = gardens.find(g =>
+      Math.hypot(player.x-(g.x*TILE), player.y-(g.y*TILE)) < 27
+    );
+
+    if (patch) {
+      if (patch.planted) {
+        say("Your flower is growing happily in the sunshine! 🌼");
+      } else if (seeds.some(s => s.taken)) {
+        const seed = seeds.find(s => s.taken);
+        seed.taken = false;
+        patch.planted = true;
+        flowers++;
+        say("You planted a magical seed! A new flower is growing! 🌷");
+        beep(740, 0.12);
+        updateHUD();
+      } else {
+        say("Find a magical seed before planting here. 🌱");
+      }
+      return;
+    }
+
+    say("Explore the island! Look for seeds, the bunny and garden patches.");
+  }
+
+  // Simple sound effects generated in the browser.
+  function beep(freq, duration) {
+    try {
+      const audio = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audio.createOscillator();
+      const gain = audio.createGain();
+      oscillator.frequency.value = freq;
+      gain.gain.value = 0.035;
+      oscillator.connect(gain);
+      gain.connect(audio.destination);
+      oscillator.start();
+      gain.gain.exponentialRampToValueAtTime(
+        0.001, audio.currentTime + duration
+      );
+      oscillator.stop(audio.currentTime + duration);
+      oscillator.onended = () => audio.close();
+    } catch (e) {}
+  }
+
+  function rect(x,y,w,h,color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(Math.round(x),Math.round(y),w,h);
+  }
+
+  function drawTile(x,y) {
+    const px = x*TILE, py = y*TILE;
+
+    if (water(x,y)) {
+      rect(px,py,16,16,"#65bce5");
+      rect(px+3,py+4,5,2,"#b7f0ef");
+      rect(px+9,py+11,4,2,"#86d9ec");
+      return;
+    }
+
+    rect(px,py,16,16,"#83c96e");
+    if ((x+y)%3===0) rect(px+3,py+5,2,2,"#a5df81");
+    if ((x*7+y*3)%7===0) rect(px+11,py+12,2,2,"#65ae61");
+
+    // Little stepping-stone path
+    if ((x>=12 && x<=16 && y===8) ||
+        (x===15 && y>=8 && y<=12)) {
+      rect(px+2,py+3,12,10,"#d8c69a");
+      rect(px+4,py+5,3,2,"#eee0b9");
+    }
+  }
+
+  function drawTree(tx,ty) {
+    const x=tx*TILE, y=ty*TILE;
+    rect(x+6,y+8,5,8,"#885238");
+    rect(x+2,y+3,12,10,"#287d52");
+    rect(x+4,y,8,10,"#36985a");
+    rect(x+5,y+2,3,3,"#65bf69");
+    rect(x+2,y+8,3,3,"#65bf69");
+  }
+
+  function drawFlower(x,y) {
+    const px=x*TILE+8, py=y*TILE+8;
+    rect(px-1,py+1,2,6,"#32844c");
+    rect(px-5,py-3,3,3,"#ff9acb");
+    rect(px+2,py-3,3,3,"#ff9acb");
+    rect(px-2,py-6,4,3,"#ff9acb");
+    rect(px-2,py,4,3,"#ff9acb");
+    rect(px-1,py-3,3,3,"#ffe88a");
+  }
+
+  function drawGarden(g) {
+    const x=g.x*TILE, y=g.y*TILE;
+    rect(x+1,y+5,14,9,"#639e51");
+    rect(x+3,y+7,10,5,"#9b744e");
+    if (g.planted) {
+      drawFlower(g.x,g.y);
+      rect(x+6,y+2,4,3,"#f9c5e4");
+    } else {
+      rect(x+6,y+8,4,2,"#6b4b35");
+    }
+  }
+
+  function drawSeed(s) {
+    if (s.taken) return;
+    const x=s.x*TILE, y=s.y*TILE;
+    rect(x+6,y+4,5,7,"#e6b94f");
+    rect(x+5,y+6,7,4,"#ffd96d");
+    rect(x+7,y+5,2,2,"#fff2a5");
+    rect(x+10,y+3,3,2,"#6ebc65");
+  }
+
+  function drawBunny() {
+    const x=bunny.x, y=bunny.y;
+    // Ears
+    rect(x+3,y-4,4,10,"#fff0df");
+    rect(x+10,y-5,4,11,"#fff0df");
+    rect(x+4,y-2,2,5,"#f6a9bd");
+    rect(x+11,y-3,2,5,"#f6a9bd");
+    // Body and head
+    rect(x+2,y+8,13,9,"#fff0df");
+    rect(x+1,y+2,15,10,"#fff8e9");
+    rect(x+4,y+5,2,2,"#3a4651");
+    rect(x+11,y+5,2,2,"#3a4651");
+    rect(x+7,y+8,3,2,"#ef91a9");
+    rect(x+4,y+15,4,3,"#fff0df");
+    rect(x+11,y+15,4,3,"#fff0df");
+  }
+
+  function drawPlayer() {
+    const x=Math.round(player.x), y=Math.round(player.y);
+    // Backpack
+    rect(x+1,y+7,4,7,"#b66b48");
+    // Feet
+    rect(x+4,y+13,4,3,"#754a43");
+    rect(x+10,y+13,4,3,"#754a43");
+    // Body
+    rect(x+3,y+6,11,8,"#f0b56c");
+    rect(x+4,y+7,9,6,"#4d9e9a");
+    // Face and hair
+    rect(x+3,y+1,11,8,"#f2c7a1");
+    rect(x+2,y,13,4,"#6b493a");
+    rect(x+3,y-1,10,3,"#6b493a");
+    rect(x+5,y+4,2,2,"#293a42");
+    rect(x+10,y+4,2,2,"#293a42");
+    rect(x+7,y+7,3,1,"#bd6b60");
+    // Little green hat
+    rect(x+2,y-2,13,3,"#3f9365");
+    rect(x+5,y-4,7,3,"#65b879");
+  }
+
+  function drawWorld() {
+    for (let y=0;y<ROWS;y++) {
+      for (let x=0;x<COLS;x++) drawTile(x,y);
+    }
+
+    // Sand around the pond
+    for (let x=19;x<=25;x++) {
+      for (let y=9;y<=14;y++) {
+        if (!water(x,y) && x>=19 && x<=25 && y>=9 && y<=14) {
+          rect(x*TILE,y*TILE,16,16,"#d9ca91");
+          if ((x+y)%2===0) rect(x*TILE+5,y*TILE+5,2,2,"#eee0b9");
+        }
+      }
+    }
+
+    gardens.forEach(drawGarden);
+    seeds.forEach(drawSeed);
+    treePositions.forEach(([x,y])=>drawTree(x,y));
+    drawBunny();
+    drawPlayer();
+
+    // Floating sparkles near the pond
+    rect(350,180,3,3,"#fff2a5");
+    rect(390,220,3,3,"#fff2a5");
+    rect(370,190,2,2,"#ffffff");
+  }
+
+  function frame(time) {
+    const dt = Math.min((time-lastTime)/16.67 || 1, 2);
+    lastTime = time;
+
+    let dx=0, dy=0;
+    if (keys.ArrowLeft || keys.a) dx--;
+    if (keys.ArrowRight || keys.d) dx++;
+    if (keys.ArrowUp || keys.w) dy--;
+    if (keys.ArrowDown || keys.s) dy++;
+
+    if (dx && dy) {
+      dx *= 0.7071;
+      dy *= 0.7071;
+    }
+
+    if (dx || dy) movePlayer(dx*player.speed*dt,dy*player.speed*dt);
+
+    collectSeeds();
+    drawWorld();
+
+    if (messageTimer>0) messageTimer--;
+    requestAnimationFrame(frame);
+  }
+
+  window.addEventListener("keydown", e => {
+    const key=e.key.length===1 ? e.key.toLowerCase() : e.key;
+    if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"," "].includes(e.key)) {
+      e.preventDefault();
+    }
+    if ((key==="e" || e.key===" ") && !e.repeat) interact();
+    keys[key]=true;
+  });
+
+  window.addEventListener("keyup", e => {
+    const key=e.key.length===1 ? e.key.toLowerCase() : e.key;
+    keys[key]=false;
+  });
+
+  window.addEventListener("blur", () => { keys={}; });
+
+  document.querySelectorAll("[data-key]").forEach(button => {
+    const key=button.dataset.key;
+    button.addEventListener("pointerdown", e => {
+      e.preventDefault();
+      keys[key]=true;
+      button.setPointerCapture(e.pointerId);
+    });
+    const release=() => { keys[key]=false; };
+    button.addEventListener("pointerup",release);
+    button.addEventListener("pointercancel",release);
+    button.addEventListener("lostpointercapture",release);
+  });
+
+  document.getElementById("interact").addEventListener("click",interact);
+  document.getElementById("reset").addEventListener("click",resetGame);
+
+  resetGame();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
