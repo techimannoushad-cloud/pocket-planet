@@ -1,0 +1,144 @@
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 18px 10px;
+  background: #182c37;
+  color: #fff7d6;
+  font-family: "Courier New", monospace;
+  text-align: center;
+}
+
+h1 {
+  color: #b9f3b0;
+  margin: 4px 0;
+  font-size: clamp(24px, 5vw, 38px);
+  text-shadow: 3px 3px #31594c;
+}
+
+.subtitle {
+  color: #d5e9ce;
+  margin: 8px 0 16px;
+}
+
+.character-picker {
+  max-width: 960px;
+  margin: 0 auto 16px;
+  padding: 12px;
+  background: #263f47;
+  border: 2px solid #b9f3b0;
+  border-radius: 8px;
+}
+
+.character-picker h3 {
+  margin: 0 0 10px;
+  color: #b9f3b0;
+}
+
+.character-options {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.game-frame {
+  width: min(960px, 100%);
+  margin: auto;
+  padding: 8px;
+  border: 4px solid #b9f3b0;
+  border-radius: 8px;
+  background: #31594c;
+  box-shadow: 0 8px 0 #101e27;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+  background: #8fce8a;
+  border: 3px solid #182c37;
+}
+
+.hud {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 12px 4px 4px;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+#message {
+  max-width: 960px;
+  margin: 16px auto;
+  min-height: 48px;
+  padding: 14px;
+  border: 2px solid #b9f3b0;
+  border-radius: 8px;
+  background: #263f47;
+  line-height: 1.6;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(3, 54px);
+  justify-content: center;
+  gap: 6px;
+  margin: 14px auto;
+}
+
+button {
+  border: 2px solid #b9f3b0;
+  border-radius: 8px;
+  background: #31594c;
+  color: white;
+  font: bold 14px "Courier New", monospace;
+  padding: 12px;
+  cursor: pointer;
+  touch-action: none;
+}
+
+button:active {
+  background: #568b68;
+}
+
+.character-choice.selected {
+  background: #568b68;
+  border-color: #ffe88a;
+  box-shadow: 0 0 0 2px #ffe88a;
+}
+
+.empty {
+  visibility: hidden;
+}
+
+.action {
+  font-size: 13px;
+  margin: 4px;
+}
+
+.instructions {
+  color: #d5e9ce;
+  line-height: 1.8;
+  font-size: 13px;
+}
+
+@media (max-width: 480px) {
+  body {
+    padding: 12px 6px;
+  }
+
+  .hud {
+    font-size: 11px;
+  }
+
+  .game-frame {
+    padding: 4px;
+  }
+}
