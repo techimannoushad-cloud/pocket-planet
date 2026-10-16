@@ -85,6 +85,7 @@ let coinCount = 0;
     document.getElementById("flowers").textContent = flowers;
     document.getElementById("quest").textContent =
       rescued ? "Complete! 💚" : "Find me!";
+    document.getElementById("coins").textContent = coinCount;
   }
 
   function resetGame() {
