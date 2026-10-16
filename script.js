@@ -58,6 +58,97 @@ let coinCount = 0;
 
   const player = { x: 5*TILE, y: 5*TILE, speed: 2 };
   const bunny = { x: 23*TILE, y: 5*TILE };
+  
+const SAVE_KEY = "pocketPlanetSaveV1";
+
+function saveGame() {
+  try {
+    const saveData = {
+      version: 1,
+      player: { x: player.x, y: player.y },
+      selectedCharacter,
+      seeds,
+      gardens,
+      flowers,
+      rescued,
+      coins,
+      coinCount,
+      treasureChest
+    };
+
+    localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
+  } catch (error) {
+    console.warn("Pocket Planet could not save progress:", error);
+  }
+}
+
+function loadGame() {
+  try {
+    const savedText = localStorage.getItem(SAVE_KEY);
+    if (!savedText) return false;
+
+    const data = JSON.parse(savedText);
+
+    if (
+      data.version !== 1 ||
+      !data.player ||
+      !Number.isFinite(data.player.x) ||
+      !Number.isFinite(data.player.y) ||
+      !["forest", "star", "flower"].includes(data.selectedCharacter) ||
+      !Array.isArray(data.seeds) ||
+      !Array.isArray(data.gardens) ||
+      !Array.isArray(data.coins)
+    ) {
+      return false;
+    }
+
+    player.x = data.player.x;
+    player.y = data.player.y;
+    selectedCharacter = data.selectedCharacter;
+
+    seeds = seedStart.map(([x, y], i) => ({
+      x, y,
+      taken: data.seeds[i]?.taken === true
+    }));
+
+    gardens = gardenPositions.map(([x, y], i) => ({
+      x, y,
+      planted: data.gardens[i]?.planted === true
+    }));
+
+    flowers = Number.isFinite(data.flowers)
+      ? Math.max(0, data.flowers)
+      : 0;
+
+    rescued = data.rescued === true;
+
+    coins = coins.map((coin, i) => ({
+      ...coin,
+      collected: data.coins[i]?.collected === true
+    }));
+
+    coinCount = Number.isFinite(data.coinCount)
+      ? Math.max(0, data.coinCount)
+      : 0;
+
+    treasureChest.opened = data.treasureChest?.opened === true;
+
+    document.querySelectorAll(".character-choice").forEach(button => {
+      button.classList.toggle(
+        "selected",
+        button.dataset.character === selectedCharacter
+      );
+    });
+
+    say("Welcome back, explorer! Your adventure has been restored. 🌱");
+    updateHUD();
+    return true;
+  } catch (error) {
+    console.warn("Pocket Planet could not load saved progress:", error);
+    return false;
+  }
+}
+
 
   const outfits = {
     forest: {
@@ -86,6 +177,7 @@ let coinCount = 0;
     document.getElementById("quest").textContent =
       rescued ? "Complete! 💚" : "Find me!";
     document.getElementById("coins").textContent = coinCount;
+    saveGame();  
   }
 
   function resetGame() {
@@ -510,9 +602,11 @@ drawPlayer();
   window.addEventListener("keyup",e=>{
     const key=e.key.length===1 ? e.key.toLowerCase() : e.key;
     keys[key]=false;
+    saveGame();
   });
 
   window.addEventListener("blur",()=>{keys={};});
+  window.addEventListener("pagehide", saveGame);
 
   document.querySelectorAll("[data-key]").forEach(button=>{
     const key=button.dataset.key;
@@ -552,6 +646,9 @@ drawPlayer();
     });
   });
 
+  if (!loadGame()) {
   resetGame();
-  requestAnimationFrame(frame);
+}
+
+requestAnimationFrame(frame);
 })();
