@@ -27,6 +27,25 @@
   const gardenPositions = [
     [7,6],[11,12],[21,14],[25,7]
   ];
+  
+const villageHouses = [
+  { x: 4, y: 4, wall: "#f5c98b", roof: "#cf735e" },
+  { x: 12, y: 3, wall: "#b8d8f2", roof: "#7776bd" },
+  { x: 15, y: 13, wall: "#f4b6cc", roof: "#b96d91" }
+];
+
+const treasureChest = { x: 26, y: 16, opened: false };
+
+let coins = [
+  { x: 8, y: 10, collected: false },
+  { x: 17, y: 6, collected: false },
+  { x: 26, y: 8, collected: false },
+  { x: 5, y: 17, collected: false },
+  { x: 18, y: 17, collected: false }
+];
+
+let coinCount = 0;
+
 
   let keys = {};
   let seeds = [];
@@ -146,7 +165,44 @@
     }
   }
 
+function collectCoins() {
+  for (const coin of coins) {
+    if (coin.collected) continue;
+
+    const x = coin.x * TILE + 8;
+    const y = coin.y * TILE + 8;
+
+    if (Math.hypot(player.x + 8 - x, player.y + 8 - y) < 14) {
+      coin.collected = true;
+      coinCount++;
+
+      say(`You found a gold coin! 🪙 Total: ${coinCount}`);
+      beep(900, 0.12);
+      updateHUD();
+    }
+  }
+}
+
   function interact() {
+    
+    if (
+      Math.hypot(
+        player.x - treasureChest.x * TILE,
+        player.y - treasureChest.y * TILE
+      ) < 30
+    ) {
+      if (!treasureChest.opened) {
+        treasureChest.opened = true;
+        coinCount += 5;
+        say("TREASURE FOUND! 🎉 You earned 5 bonus coins!");
+        beep(1000, 0.25);
+        updateHUD();
+      } else {
+        say("Your treasure chest is already open! 💛");
+      }
+      return;
+    }
+
     const distance = obj =>
       Math.hypot(player.x-obj.x,player.y-obj.y);
 
@@ -231,6 +287,67 @@
     rect(x+5,y+2,3,3,"#65bf69");
     rect(x+2,y+8,3,3,"#65bf69");
   }
+  
+function drawHouse(house) {
+  const x = house.x * TILE;
+  const y = house.y * TILE;
+
+  // House shadow
+  rect(x + 1, y + 12, 17, 8, "#57945a");
+
+  // Walls
+  rect(x + 3, y + 5, 13, 12, house.wall);
+
+  // Roof
+  rect(x, y + 3, 19, 5, house.roof);
+  rect(x + 3, y, 13, 5, house.roof);
+  rect(x + 6, y - 2, 7, 3, house.roof);
+
+  // Door
+  rect(x + 8, y + 10, 4, 7, "#86553e");
+  rect(x + 10, y + 13, 1, 1, "#ffe88a");
+
+  // Windows
+  rect(x + 4, y + 8, 3, 3, "#8ed9ed");
+  rect(x + 13, y + 8, 2, 3, "#8ed9ed");
+
+  // Window frames
+  rect(x + 5, y + 8, 1, 3, "#fff4d6");
+  rect(x + 4, y + 9, 3, 1, "#fff4d6");
+}
+
+function drawCoin(coin) {
+  if (coin.collected) return;
+
+  const x = coin.x * TILE;
+  const y = coin.y * TILE;
+  const sparkle = Math.sin(performance.now() / 150) > 0;
+
+  rect(x + 5, y + 4, 7, 8, "#d79b30");
+  rect(x + 6, y + 3, 5, 9, "#ffe477");
+  rect(x + 7, y + 5, 3, 5, "#fff4ad");
+
+  if (sparkle) {
+    rect(x + 2, y + 3, 2, 2, "#fff8d0");
+    rect(x + 13, y + 10, 2, 2, "#fff8d0");
+  }
+}
+
+function drawTreasureChest() {
+  const x = treasureChest.x * TILE;
+  const y = treasureChest.y * TILE;
+
+  rect(x + 2, y + 7, 13, 8, "#89512f");
+  rect(x + 1, y + 5, 15, 4, "#bd8045");
+  rect(x + 3, y + 4, 11, 3, "#e5b45c");
+  rect(x + 7, y + 8, 4, 4, "#ffe477");
+
+  if (treasureChest.opened) {
+    rect(x + 3, y + 2, 11, 3, "#e5b45c");
+    rect(x + 5, y + 9, 7, 3, "#ffe477");
+  }
+}
+
 
   function drawFlower(x,y) {
     const px=x*TILE+8,py=y*TILE+8;
@@ -335,11 +452,16 @@
       }
     }
 
-    gardens.forEach(drawGarden);
-    seeds.forEach(drawSeed);
-    treePositions.forEach(([x,y])=>drawTree(x,y));
-    drawBunny();
-    drawPlayer();
+
+villageHouses.forEach(drawHouse);
+gardens.forEach(drawGarden);
+seeds.forEach(drawSeed);
+coins.forEach(drawCoin);
+drawTreasureChest();
+treePositions.forEach(([x,y]) => drawTree(x,y));
+drawBunny();
+drawPlayer();
+
 
     rect(350,180,3,3,"#fff2a5");
     rect(390,220,3,3,"#fff2a5");
@@ -368,6 +490,7 @@
     }
 
     collectSeeds();
+    collectCoins();
     drawWorld();
     requestAnimationFrame(frame);
   }
