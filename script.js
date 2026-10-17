@@ -312,6 +312,7 @@ function collectCoins() {
     if (Math.hypot(player.x + 8 - x, player.y + 8 - y) < 14) {
       coin.collected = true;
       coinCount++;
+      addXP(5);
 
       say(`You found a gold coin! 🪙 Total: ${coinCount}`);
       beep(900, 0.12);
