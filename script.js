@@ -55,6 +55,9 @@ function addXP(amount){
     saveGame();
 }
 
+let xp = 0;
+let level = 1;
+
 let coins = [
   { x: 8, y: 10, collected: false },
   { x: 17, y: 6, collected: false },
