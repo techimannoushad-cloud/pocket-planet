@@ -321,86 +321,89 @@ function collectCoins() {
   }
 }
 
-  function x() {
-    seed.taken = false;
-    patch.planted = true;
-    flowers++;
-    addXP(15);
+  
+function interact() {
+  // 1. Check the treasure chest
+  if (
+    Math.hypot(
+      player.x - treasureChest.x * TILE,
+      player.y - treasureChest.y * TILE
+    ) < 30
+  ) {
+    if (!treasureChest.opened) {
+      treasureChest.opened = true;
+      coinCount += 5;
+      say("TREASURE FOUND! 🎉 You earned 5 bonus coins!");
+      beep(1000, 0.25);
+      updateHUD();
+    } else {
+      say("Your treasure chest is already open! 💛");
+    }
+    return;
+  }
 
-    say("You planted a magical flower! 🌷");
-    if (
-      Math.hypot(
-        player.x - treasureChest.x * TILE,
-        player.y - treasureChest.y * TILE
-      ) < 30
-    ) {
-      if (!treasureChest.opened) {
-        treasureChest.opened = true;
-        coinCount += 5;
-        say("TREASURE FOUND! 🎉 You earned 5 bonus coins!");
-        beep(1000, 0.25);
-        updateHUD();
-      } else {
-        say("Your treasure chest is already open! 💛");
-      }
-      return;
-      if(
+  // 2. Check the enchanted forest fox
+  if (
     enchantedUnlocked &&
-    Math.hypot(player.x-fox.x,player.y-fox.y)<28
-){
+    Math.hypot(player.x - fox.x, player.y - fox.y) < 28
+  ) {
     say("🦊 Fox: The stars reward kind explorers.");
     return;
-}
-    }
-
-    const distance = obj =>
-      Math.hypot(player.x-obj.x,player.y-obj.y);
-
-    if (distance(bunny)<30) {
-      const count = seeds.filter(s=>s.taken).length;
-
-      if (!rescued && count>=3) {
-        rescued = true;
-        flowers++;
-        say("Bunny: You helped me! Our island can bloom! 🌸");
-        beep(880,0.16);
-      } else if (!rescued) {
-        say(`Bunny: Please find 3 seeds! You have ${count}. 🐰`);
-      } else {
-        say("Bunny: Thank you, explorer! 💚");
-      }
-
-      updateHUD();
-      return;
-    }
-
-    const patch = gardens.find(g =>
-      Math.hypot(player.x-g.x*TILE,player.y-g.y*TILE)<27
-    );
-
-    if (!patch) {
-      say("Explore the island and look for seeds, gardens and the bunny!");
-      return;
-    }
-
-    if (patch.planted) {
-      say("Your flower is growing happily! 🌼");
-      return;
-    }
-
-    const seed = seeds.find(s=>s.taken);
-    if (!seed) {
-      say("Find a magical seed before planting here. 🌱");
-      return;
-    }
-
-    seed.taken = false;
-    patch.planted = true;
-    flowers++;
-    say("You planted a magical flower! 🌷");
-    beep(740,0.12);
-    updateHUD();
   }
+
+  // 3. Check the bunny quest
+  if (Math.hypot(player.x - bunny.x, player.y - bunny.y) < 30) {
+    const count = seeds.filter(s => s.taken).length;
+
+    if (!rescued && count >= 3) {
+      rescued = true;
+      flowers++;
+      say("Bunny: You helped me! Our island can bloom! 🌸");
+      beep(880, 0.16);
+    } else if (!rescued) {
+      say(`Bunny: Please find 3 seeds! You have ${count}. 🐰`);
+    } else {
+      say("Bunny: Thank you, explorer! 💚");
+    }
+
+    updateHUD();
+    return;
+  }
+
+  // 4. Find the garden near the player
+  const patch = gardens.find(g =>
+    Math.hypot(player.x - g.x * TILE, player.y - g.y * TILE) < 27
+  );
+
+  if (!patch) {
+    say("Explore the island and look for seeds, gardens and the bunny!");
+    return;
+  }
+
+  if (patch.planted) {
+    say("Your flower is growing happily! 🌼");
+    return;
+  }
+
+  // 5. Check whether a seed is available to plant
+  const seed = seeds.find(s => s.taken);
+
+  if (!seed) {
+    say("Find a magical seed before planting here. 🌱");
+    return;
+  }
+
+  // 6. Plant the flower
+  seed.taken = false;
+  patch.planted = true;
+  flowers++;
+  addXP(15);
+
+  say("You planted a magical flower! 🌷");
+  beep(740, 0.12);
+  updateHUD();
+}
+
 
   function rect(x,y,w,h,color) {
     ctx.fillStyle = color;
