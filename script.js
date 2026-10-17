@@ -288,8 +288,7 @@ function loadGame() {
       if (Math.hypot(player.x+8-sx,player.y+8-sy)<13) {
         seed.taken = true;
         addXP(10);
-        addXP(15);
-        addXP(30);
+  
       if(level>=3 && !enchantedUnlocked){
 
           enchantedUnlocked=true;
