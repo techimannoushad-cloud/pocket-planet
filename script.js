@@ -597,9 +597,7 @@ function drawTreasureChest() {
           rect(x*TILE,y*TILE,16,16,"#d9ca91");
           if ((x+y)%2===0) {
             rect(x*TILE+5,y*TILE+5,2,2,"#eee0b9");
-            if(enchantedUnlocked){
-               drawEnchantedForest();
-            }
+            
           }
         }
       }
@@ -630,6 +628,9 @@ function drawEnchantedForest(){
     rect(370,35+glow,3,3,"#fff8b5");
     rect(420,55-glow,3,3,"#fff8b5");
     rect(450,30+glow,3,3,"#fff8b5");
+}
+    if (enchantedUnlocked) {
+    drawEnchantedForest();
 }
 
 villageHouses.forEach(drawHouse);
