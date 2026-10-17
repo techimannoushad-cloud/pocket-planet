@@ -320,8 +320,13 @@ function collectCoins() {
   }
 }
 
-  function interact() {
-    
+  function x() {
+    seed.taken = false;
+    patch.planted = true;
+    flowers++;
+    addXP(15);
+
+    say("You planted a magical flower! 🌷");
     if (
       Math.hypot(
         player.x - treasureChest.x * TILE,
