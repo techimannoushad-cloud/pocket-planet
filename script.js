@@ -108,7 +108,10 @@ function saveGame() {
       rescued,
       coins,
       coinCount,
-      treasureChest
+      treasureChest,
+      xp,
+      level,
+      enchantedUnlocked,
     };
     
 
@@ -162,7 +165,9 @@ function loadGame() {
       ...coin,
       collected: data.coins[i]?.collected === true
     }));
-
+xp = Number.isFinite(data.xp) ? data.xp : 0;
+level = Number.isFinite(data.level) ? data.level : 1;
+enchantedUnlocked = data.enchantedUnlocked === true || level >= 3;
     coinCount = Number.isFinite(data.coinCount)
       ? Math.max(0, data.coinCount)
       : 0;
