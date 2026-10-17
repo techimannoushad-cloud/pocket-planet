@@ -35,6 +35,25 @@ const villageHouses = [
 ];
 
 const treasureChest = { x: 26, y: 16, opened: false };
+function addXP(amount){
+
+    xp += amount;
+
+    while(xp>=100){
+        xp-=100;
+        level++;
+
+        coinCount += 20;
+
+        say(`🎉 Level ${level}! +20 Coins`);
+    }
+
+    document.getElementById("xp").textContent=xp;
+    document.getElementById("level").textContent=level;
+    document.getElementById("xp-fill").style.width=(xp)+"%";
+
+    saveGame();
+}
 
 let coins = [
   { x: 8, y: 10, collected: false },
@@ -55,9 +74,22 @@ let coinCount = 0;
   let selectedCharacter = "forest";
   let walkFrame = 0;
   let lastTime = 0;
+  let collectedSeedTotal = 0;
+  let plantedFlowerTotal = 0;
+  let enchantedUnlocked = false;
+
+  let questClaims = {
+    seeds: false,
+    flowers: false,
+    bunny: false
+  };
 
   const player = { x: 5*TILE, y: 5*TILE, speed: 2 };
   const bunny = { x: 23*TILE, y: 5*TILE };
+  const fox={
+    x:390,
+    y:50
+};
   
 const SAVE_KEY = "pocketPlanetSaveV1";
 
@@ -75,6 +107,7 @@ function saveGame() {
       coinCount,
       treasureChest
     };
+    
 
     localStorage.setItem(SAVE_KEY, JSON.stringify(saveData));
   } catch (error) {
@@ -251,6 +284,15 @@ function loadGame() {
 
       if (Math.hypot(player.x+8-sx,player.y+8-sy)<13) {
         seed.taken = true;
+        addXP(10);
+        addXP(15);
+        addXP(30);
+      if(level>=3 && !enchantedUnlocked){
+
+          enchantedUnlocked=true;
+
+          say("🌲 The Enchanted Forest has opened!");
+       }
         say("You found a magical seed! ✨");
         beep();
         updateHUD();
@@ -294,6 +336,13 @@ function collectCoins() {
         say("Your treasure chest is already open! 💛");
       }
       return;
+      if(
+    enchantedUnlocked &&
+    Math.hypot(player.x-fox.x,player.y-fox.y)<28
+){
+    say("🦊 Fox: The stars reward kind explorers.");
+    return;
+}
     }
 
     const distance = obj =>
@@ -540,11 +589,40 @@ function drawTreasureChest() {
           rect(x*TILE,y*TILE,16,16,"#d9ca91");
           if ((x+y)%2===0) {
             rect(x*TILE+5,y*TILE+5,2,2,"#eee0b9");
+            if(enchantedUnlocked){
+               drawEnchantedForest();
+            }
           }
         }
       }
     }
+function drawEnchantedForest(){
 
+    rect(330,15,135,90,"#3c7a58");
+
+    for(let i=0;i<12;i++){
+
+        let x=340+i*9;
+        let y=30+Math.sin(i)*12;
+
+        rect(x,y,6,6,"#c7ff8f");
+    }
+
+    for(let i=0;i<8;i++){
+
+        let x=340+i*14;
+        let y=75+Math.cos(i)*8;
+
+        rect(x,y,4,8,"#fff2d8");
+        rect(x-3,y-3,10,5,"#ff8ad4");
+    }
+
+    let glow=Math.sin(performance.now()/300)*3;
+
+    rect(370,35+glow,3,3,"#fff8b5");
+    rect(420,55-glow,3,3,"#fff8b5");
+    rect(450,30+glow,3,3,"#fff8b5");
+}
 
 villageHouses.forEach(drawHouse);
 gardens.forEach(drawGarden);
@@ -561,6 +639,17 @@ drawPlayer();
     rect(370,190,2,2,"#ffffff");
   }
 
+  function drawFox(){
+
+    rect(fox.x,fox.y,12,10,"#f28c28");
+    rect(fox.x+3,fox.y-4,6,4,"#f28c28");
+    rect(fox.x+4,fox.y+3,2,2,"#000");
+    rect(fox.x+8,fox.y+3,2,2,"#000");
+}
+    if(enchantedUnlocked){
+        drawFox();
+    }
+  
   function frame(time) {
     const dt=Math.min((time-lastTime)/16.67 || 1,2);
     lastTime=time;
