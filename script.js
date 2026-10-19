@@ -46,6 +46,10 @@ function addXP(amount){
         coinCount += 20;
 
         say(`🎉 Level ${level}! +20 Coins`);
+      if (level >= 3 && !enchantedUnlocked) {
+    enchantedUnlocked = true;
+    say("🌳 The Enchanted Forest has opened! ✨");
+}
     }
 
     document.getElementById("xp").textContent=xp;
@@ -654,6 +658,9 @@ drawPlayer();
     rect(350,180,3,3,"#fff2a5");
     rect(390,220,3,3,"#fff2a5");
     rect(370,190,2,2,"#ffffff");
+    // Enchanted Forest entrance sign
+    rect(365, 92, 48, 12, "#6b4934");
+    rect(369, 95, 40, 6, "#ffe88a");
   }
 
   function drawFox(){
