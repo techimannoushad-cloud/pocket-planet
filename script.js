@@ -627,54 +627,88 @@ function drawTreasureChest() {
         }
       }
     }
-function drawEnchantedForest(){
 
-    rect(330,15,135,90,"#3c7a58");
+function drawEnchantedForest() {
+  // Magical forest background
+  rect(330, 15, 135, 90, "#285d49");
+  rect(334, 19, 127, 82, "#3c7a58");
 
-    for(let i=0;i<12;i++){
+  const time = performance.now();
 
-        let x=340+i*9;
-        let y=30+Math.sin(i)*12;
+  // ✨ Floating glowing lights
+  for (let i = 0; i < 18; i++) {
+    const x = 337 + ((i * 23) % 120);
+    const y = 23 + ((i * 17) % 47);
+    const drift = Math.sin(time / 350 + i) * 3;
+    const pulse = Math.sin(time / 180 + i);
 
-        rect(x,y,6,6,"#c7ff8f");
+    if (pulse > -0.35) {
+      rect(x - 2, y + drift - 2, 7, 7, "#57966b");
+      rect(x, y + drift, 3, 3, "#c7ff8f");
     }
-
-    for(let i=0;i<8;i++){
-
-        let x=340+i*14;
-        let y=75+Math.cos(i)*8;
-
-        rect(x,y,4,8,"#fff2d8");
-        rect(x-3,y-3,10,5,"#ff8ad4");
-    }
-
-    let glow=Math.sin(performance.now()/300)*3;
-
-    rect(370,35+glow,3,3,"#fff8b5");
-    rect(420,55-glow,3,3,"#fff8b5");
-    rect(450,30+glow,3,3,"#fff8b5");
-}
-    if (enchantedUnlocked) {
-    drawEnchantedForest();
-}
-
-villageHouses.forEach(drawHouse);
-gardens.forEach(drawGarden);
-seeds.forEach(drawSeed);
-coins.forEach(drawCoin);
-drawTreasureChest();
-treePositions.forEach(([x,y]) => drawTree(x,y));
-drawBunny();
-drawPlayer();
-
-
-    rect(350,180,3,3,"#fff2a5");
-    rect(390,220,3,3,"#fff2a5");
-    rect(370,190,2,2,"#ffffff");
-    // Enchanted Forest entrance sign
-    rect(365, 92, 48, 12, "#6b4934");
-    rect(369, 95, 40, 6, "#ffe88a");
   }
+
+  // 🌳 New magical glowing trees
+  const magicTrees = [
+    { x: 340, y: 42 },
+    { x: 355, y: 29 },
+    { x: 385, y: 39 },
+    { x: 422, y: 27 },
+    { x: 445, y: 44 },
+    { x: 449, y: 65 }
+  ];
+
+  magicTrees.forEach((tree, i) => {
+    const sway = Math.sin(time / 450 + i) * 2;
+    const glow = Math.sin(time / 250 + i) > 0;
+
+    // Glowing aura
+    rect(tree.x - 4, tree.y - 4 + sway, 20, 20,
+      glow ? "#477e5b" : "#356e50");
+
+    // Trunk
+    rect(tree.x + 4, tree.y + 9 + sway, 5, 9, "#986342");
+
+    // Leaf layers
+    rect(tree.x + 1, tree.y + 3 + sway, 11, 8, "#39a96b");
+    rect(tree.x + 3, tree.y + sway, 8, 9, "#65d783");
+    rect(tree.x + 5, tree.y - 3 + sway, 4, 5, "#b4ff92");
+
+    // Bright leaf highlights
+    rect(tree.x + 2, tree.y + 3 + sway, 3, 3, "#d5ff9b");
+  });
+
+  // 🌸 Magical pink flowers
+  for (let i = 0; i < 8; i++) {
+    const x = 340 + i * 14;
+    const y = 75 + Math.cos(i) * 8;
+
+    rect(x, y, 4, 8, "#fff2d8");
+    rect(x - 3, y - 3, 10, 5, "#ff8ad4");
+    rect(x, y - 2, 3, 3, "#ffe88a");
+  }
+
+  // ✨ Animated sparkling stars
+  for (let i = 0; i < 12; i++) {
+    const x = 337 + ((i * 19) % 123);
+    const y = 20 + ((i * 13) % 75);
+    const twinkle = Math.sin(time / 130 + i * 1.7);
+
+    if (twinkle > 0.25) {
+      rect(x - 2, y - 2, 7, 7, "#57966b");
+      rect(x, y, 3, 3, "#fff8b5");
+    }
+  }
+
+  // ✨ Extra floating magical sparkles
+  const sparkleX = 395 + Math.sin(time / 400) * 22;
+  const sparkleY = 58 + Math.cos(time / 300) * 15;
+
+  rect(sparkleX, sparkleY, 3, 3, "#ffffff");
+  rect(sparkleX - 2, sparkleY + 1, 7, 1, "#ffe88a");
+  rect(sparkleX + 1, sparkleY - 2, 1, 7, "#ffe88a");
+}
+
 
   function drawFox(){
 
