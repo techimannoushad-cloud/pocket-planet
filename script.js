@@ -625,8 +625,13 @@ function drawTreasureChest() {
             
           }
         }
+        if (enchantedUnlocked) {
+      drawEnchantedForest();
+    }
       }
     }
+
+    // Draw the magical forest on the world
 
 function drawEnchantedForest() {
   // Magical forest background
