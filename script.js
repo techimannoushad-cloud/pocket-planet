@@ -350,17 +350,20 @@ function interact() {
     }
     return;
   }
+
+  
 // Enchanted Forest entrance
-if (
-  Math.hypot(player.x - 390, player.y - 100) < 35
-) {
-  if (level >= 3 && enchantedUnlocked) {
+if (Math.hypot(player.x - 390, player.y - 100) < 55) {
+  if (level >= 3) {
+    enchantedUnlocked = true;
+    saveGame();
     say("✨ Welcome to the Enchanted Forest! Find the friendly fox! 🦊");
   } else {
     say("🔒 The Enchanted Forest opens at Level 3. Keep exploring! 🌱");
   }
   return;
 }
+  
   // 2. Check the enchanted forest fox
   if (
     enchantedUnlocked &&
